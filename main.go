@@ -20,4 +20,6 @@ func main() {
 		fmt.Printf("Failed to start server, err: %s\n", err.Error())
 		panic(err)
 	}
+
+	println("Running code after ListenAndServe (only happens when server shuts down)")
 }

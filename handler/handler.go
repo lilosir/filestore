@@ -44,11 +44,11 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		// create filemeta which is used for get/add/update file
 		fileMeta := meta.FileMeta{
 			FileName: fileHeader.Filename,
-			FilePath: "./tmp/" + fileHeader.Filename,
+			FileAddr: "./tmp/" + fileHeader.Filename,
 			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
 		}
 
-		newFile, err := os.Create(fileMeta.FilePath)
+		newFile, err := os.Create(fileMeta.FileAddr)
 		if err != nil {
 			fmt.Printf("Failed to create file, err: %v\n", err)
 			return
@@ -69,6 +69,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 		// update the global fileMetas
 		meta.UpdateFileMeta(fileMeta)
+		_ = meta.UpdateFileMetaDB(fileMeta)
 
 		http.Redirect(w, r, "/file/upload/success", http.StatusFound)
 	}
@@ -121,7 +122,7 @@ func DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	fileMeta := meta.GetFileMeta(r.Form.Get("filehash"))
-	file, err := os.Open(fileMeta.FilePath)
+	file, err := os.Open(fileMeta.FileAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -180,7 +181,7 @@ func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	fileMeta := meta.GetFileMeta(fileSha1)
 
 	//delete file from disk
-	err := os.Remove(fileMeta.FilePath)
+	err := os.Remove(fileMeta.FileAddr)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
