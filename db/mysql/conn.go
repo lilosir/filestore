@@ -12,6 +12,7 @@ var db *sql.DB
 
 func init() {
 	var err error
+	// must use "=", instead of ":=", otherwise will clear the global variable
 	db, err = sql.Open("mysql", "root:123456@tcp(192.168.2.23:13306)/fileserver?charset=utf8")
 	if err != nil {
 		panic(err.Error())

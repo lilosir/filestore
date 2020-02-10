@@ -22,7 +22,7 @@ func init() {
 	fileMetas = make(map[string]FileMeta)
 }
 
-// UpdateFileMeta add to/update file meta
+// UpdateFileMeta add to/update file meta, used for local storage
 func UpdateFileMeta(filemeta FileMeta) {
 	fileMetas[filemeta.FileSha1] = filemeta
 }
@@ -35,6 +35,22 @@ func UpdateFileMetaDB(filemeta FileMeta) bool {
 // GetFileMeta returns a file meta via file sha1
 func GetFileMeta(filesha1 string) FileMeta {
 	return fileMetas[filesha1]
+}
+
+// GetFileMetaDB returns a file meta via file sha1 from mysql
+func GetFileMetaDB(filesha1 string) (FileMeta, error) {
+	fileMeta := FileMeta{}
+	tfile, err := mydb.GetFileMeta(filesha1)
+	if err != nil {
+		return fileMeta, err
+	}
+
+	fileMeta.FileSha1 = tfile.FileHash
+	fileMeta.FileName = tfile.FileName.String
+	fileMeta.FileSize = tfile.FileSize.Int64
+	fileMeta.FileAddr = tfile.FileAddr.String
+
+	return fileMeta, nil
 }
 
 // GetLastMetas returns last amount of the global file metas

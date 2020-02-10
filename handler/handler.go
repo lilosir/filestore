@@ -68,7 +68,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		fileMeta.FileSha1 = util.FileSha1(newFile)
 
 		// update the global fileMetas
-		meta.UpdateFileMeta(fileMeta)
+		// meta.UpdateFileMeta(fileMeta)
 		_ = meta.UpdateFileMetaDB(fileMeta)
 
 		http.Redirect(w, r, "/file/upload/success", http.StatusFound)
@@ -86,7 +86,12 @@ func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 
 	fileHash := r.Form["filehash"][0]
 
-	fileMeta := meta.GetFileMeta(fileHash)
+	// fileMeta := meta.GetFileMeta(fileHash)
+	fileMeta, err := meta.GetFileMetaDB(fileHash)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	// any interface ---> json
 	data, err := json.Marshal(fileMeta)
