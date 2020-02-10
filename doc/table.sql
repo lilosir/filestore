@@ -23,7 +23,7 @@ CREATE TABLE `tbl_user` (
     `email_validated` tinyint(1) DEFAULT 0 COMMENT 'if the email is valided',
     `phone_validated` tinyint(1) DEFAULT 0 COMMENT 'if the phone number is valided',
     `signup_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT 'register time',
-    `last_active` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE COMMENT 'last active time',
+    `last_active` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'last active time',
     `profile` text COMMENT 'user profile',
     `status` int(11) NOT NULL DEFAULT '0' COMMENT 'status(available/disabled/deleted, etc)',
     PRIMARY KEY (`id`),
