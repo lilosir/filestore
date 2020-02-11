@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 var (
@@ -49,4 +50,41 @@ func SignUpHander(w http.ResponseWriter, r *http.Request) {
 	default:
 		fmt.Fprintf(w, "Request method not supported")
 	}
+}
+
+// SignInHander handle user sign in
+func SignInHander(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	username := r.Form.Get("username")
+	password := r.Form.Get("password")
+	encPassword := util.Sha1([]byte(password + passwordSalt))
+
+	//step 1: check username and password
+	pwdChecked := dbUser.UserSignIn(username, encPassword)
+	if !pwdChecked {
+		w.Write([]byte("Failed"))
+		return
+	}
+
+	//step 2: authentication (token or session/cookites)
+	token := GenToken(username)
+	ok := dbUser.UpdateToken(username, token)
+	if !ok {
+		w.Write([]byte("Failed"))
+		return
+	}
+
+	//setp 3: redirect to main page after login
+	w.Write([]byte("http://" + r.Host + "/static/view/home.html"))
+}
+
+// GenToken get a user token which is used for authentication
+func GenToken(username string) string {
+	// 40characters md5(username+timestamp+token_salt)+timestamp[:8]
+	ts := fmt.Sprintf("%x", time.Now().Unix())
+	tokenPrefix := util.MD5([]byte(username + ts + "_tokensalt"))
+	return tokenPrefix + ts[:8]
 }

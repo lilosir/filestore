@@ -30,3 +30,11 @@ CREATE TABLE `tbl_user` (
     UNIQUE KEY `idx_phone`(`phone`),
     KEY `idx_status`(`status`)
 )ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `tbl_user_token` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_name` varchar(64) NOT NULL DEFAULT '' COMMENT 'user name',
+    `user_token` char(40) NOT NULL DEFAULT '' COMMENT 'authentication token',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_username`(`user_name`)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
