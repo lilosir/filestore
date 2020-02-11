@@ -65,7 +65,7 @@ func SignInHander(w http.ResponseWriter, r *http.Request) {
 	//step 1: check username and password
 	pwdChecked := dbUser.UserSignIn(username, encPassword)
 	if !pwdChecked {
-		w.Write([]byte("Failed"))
+		w.Write([]byte("FAILED"))
 		return
 	}
 
@@ -73,12 +73,13 @@ func SignInHander(w http.ResponseWriter, r *http.Request) {
 	token := GenToken(username)
 	ok := dbUser.UpdateToken(username, token)
 	if !ok {
-		w.Write([]byte("Failed"))
+		w.Write([]byte("FAILED"))
 		return
 	}
 
 	//setp 3: redirect to main page after login
 	w.Write([]byte("http://" + r.Host + "/static/view/home.html"))
+	// http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
 }
 
 // GenToken get a user token which is used for authentication

@@ -32,7 +32,7 @@ func UserSignUp(username, password string) bool {
 // UserSignIn check user if login successfully
 func UserSignIn(username, encpassword string) bool {
 	stmt, err := mysql.DBConn().Prepare(
-		"select * from tbl_user where username=? limit 1")
+		"select * from tbl_user where user_name=? limit 1")
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
@@ -59,7 +59,7 @@ func UserSignIn(username, encpassword string) bool {
 // UpdateToken will create/update the token from tbl_use_token table
 func UpdateToken(username, token string) bool {
 	stmt, err := mysql.DBConn().Prepare(
-		"replace into tbl_use_token (`user_name`, `user_token`) values(?,?)")
+		"replace into tbl_user_token (`user_name`, `user_token`) values(?,?)")
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
