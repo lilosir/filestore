@@ -2,6 +2,7 @@ package main
 
 import (
 	"fileStore/handler"
+	"fileStore/handler/middleware"
 	"fmt"
 	"net/http"
 )
@@ -19,6 +20,7 @@ func main() {
 
 	http.HandleFunc("/user/signup", handler.SignUpHander)
 	http.HandleFunc("/user/signin", handler.SignInHander)
+	http.HandleFunc("/user/info", middleware.HTTPInterceptor(handler.UserInfoHandler))
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {

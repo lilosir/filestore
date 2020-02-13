@@ -69,7 +69,7 @@ func SignInHander(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//step 2: authentication (token or session/cookites)
+	//step 2: authentication (token or session/cookies)
 	token := GenToken(username)
 	ok := dbUser.UpdateToken(username, token)
 	if !ok {
@@ -78,8 +78,54 @@ func SignInHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//setp 3: redirect to main page after login
-	w.Write([]byte("http://" + r.Host + "/static/view/home.html"))
+	// w.Write([]byte("http://" + r.Host + "/static/view/home.html"))
 	// http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
+	resp := util.NewRespMsg(http.StatusTemporaryRedirect, "OK",
+		struct {
+			Location string
+			Username string
+			Token    string
+		}{
+			Location: "http://" + r.Host + "/static/view/home.html",
+			Username: username,
+			Token:    token,
+		},
+	)
+	w.Write(resp.JSONBytes())
+}
+
+// UserInfoHandler handle user info query
+func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
+	//step 1: parse form
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	username := r.Form.Get("username")
+	// token := r.Form.Get("token")
+
+	//step 2: validate token
+	// added a middleware to validate the token
+	// ok := IsTokenValid(token)
+	// if !ok {
+	// 	w.WriteHeader(http.StatusForbidden)
+	// 	return
+	// }
+
+	//step 3: query
+	user, err := dbUser.GetUserInfo(username)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	//step 4: respond with specific info
+	resp := util.RespMsg{
+		Code: 0,
+		Msg:  "OK",
+		Data: user,
+	}
+	w.Write(resp.JSONBytes())
 }
 
 // GenToken get a user token which is used for authentication
@@ -88,4 +134,17 @@ func GenToken(username string) string {
 	ts := fmt.Sprintf("%x", time.Now().Unix())
 	tokenPrefix := util.MD5([]byte(username + ts + "_tokensalt"))
 	return tokenPrefix + ts[:8]
+}
+
+// IsTokenValid check if token is valid
+func IsTokenValid(token string) bool {
+	if len(token) != 40 {
+		return false
+	}
+	//validate if token is expired
+
+	//query token from tbl_user_token table via username
+
+	//match two tokens
+	return true
 }
