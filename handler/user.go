@@ -7,11 +7,13 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 var (
-	passwordSalt = "+@#$%"
+	passwordSalt  = "+@#$%"
+	validDuration = int64(60 * 60 * 7)
 )
 
 // SignUpHander handle user sign up
@@ -137,14 +139,26 @@ func GenToken(username string) string {
 }
 
 // IsTokenValid check if token is valid
-func IsTokenValid(token string) bool {
+func IsTokenValid(token, username string) bool {
 	if len(token) != 40 {
 		return false
 	}
-	//validate if token is expired
-
+	//validate if token is expired. The second parameter is base 16, according the GenToken is using base16
+	tokenTime, _ := strconv.ParseInt(token[len(token)-8:], 16, 64)
+	now := time.Now().Unix()
+	if now-tokenTime > validDuration {
+		return false
+	}
 	//query token from tbl_user_token table via username
+	dbToken, err := dbUser.GetUserToken(username)
+	if err != nil {
+		fmt.Printf("fetch token error: %s", err.Error())
+		return false
+	}
 
+	if dbToken == token {
+		return true
+	}
 	//match two tokens
-	return true
+	return false
 }
