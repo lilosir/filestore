@@ -41,7 +41,7 @@ func GetFileMeta(filesha1 string) FileMeta {
 func GetFileMetaDB(filesha1 string) (FileMeta, error) {
 	fileMeta := FileMeta{}
 	tfile, err := mydb.GetFileMeta(filesha1)
-	if err != nil {
+	if err != nil || tfile == nil {
 		return fileMeta, err
 	}
 

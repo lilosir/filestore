@@ -20,7 +20,6 @@ func OnFileUploadFinished(filehash string, filename string, filesize int64, file
 
 	result, err := stmt.Exec(filehash, filename, filesize, fileaddr)
 	if err != nil {
-		fmt.Println("===>" + err.Error())
 		return false
 	}
 
@@ -34,6 +33,7 @@ func OnFileUploadFinished(filehash string, filename string, filesize int64, file
 	return false
 }
 
+// TableFile struct
 type TableFile struct {
 	FileHash string
 	FileName sql.NullString
@@ -43,7 +43,6 @@ type TableFile struct {
 
 // GetFileMeta return filemeta from mysql
 func GetFileMeta(filehash string) (*TableFile, error) {
-
 	stmt, err := mysql.DBConn().Prepare(
 		"select file_sha1, file_name, file_size, file_addr from tbl_file where file_sha1=? and status=1 limit 1")
 
@@ -54,10 +53,11 @@ func GetFileMeta(filehash string) (*TableFile, error) {
 	defer stmt.Close()
 
 	tfile := TableFile{}
-
 	err = stmt.QueryRow(filehash).Scan(&tfile.FileHash, &tfile.FileName, &tfile.FileSize, &tfile.FileAddr)
 	if err != nil {
-		fmt.Println("Failed to query statement, error: " + err.Error())
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 

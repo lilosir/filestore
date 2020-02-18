@@ -4,8 +4,6 @@ import (
 	dbUser "fileStore/db"
 	"fileStore/util"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,19 +11,20 @@ import (
 
 var (
 	passwordSalt  = "+@#$%"
-	validDuration = int64(60 * 60 * 7)
+	validDuration = int64(60 * 60 * 24 * 365)
 )
 
 // SignUpHander handle user sign up
 func SignUpHander(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		page, err := ioutil.ReadFile("./static/view/signup.html")
-		if err != nil {
-			io.WriteString(w, "internal server error: could not find sign up page")
-			return
-		}
-		w.Write(page)
+		// page, err := ioutil.ReadFile("./static/view/signup.html")
+		// if err != nil {
+		// 	io.WriteString(w, "internal server error: could not find sign up page")
+		// 	return
+		// }
+		// w.Write(page)
+		http.Redirect(w, r, "/static/view/signup.html", http.StatusFound)
 		return
 	case http.MethodPost:
 		if err := r.ParseForm(); err != nil {
@@ -56,6 +55,17 @@ func SignUpHander(w http.ResponseWriter, r *http.Request) {
 
 // SignInHander handle user sign in
 func SignInHander(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		// data, err := ioutil.ReadFile("./static/view/signin.html")
+		// if err != nil {
+		// 	w.WriteHeader(http.StatusInternalServerError)
+		// 	return
+		// }
+		// w.Write(data)
+		http.Redirect(w, r, "/static/view/signin.html", http.StatusFound)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

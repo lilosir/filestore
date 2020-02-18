@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fileStore/db"
 	"fileStore/meta"
 	"fileStore/util"
 	"strconv"
@@ -71,7 +72,16 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		// meta.UpdateFileMeta(fileMeta)
 		_ = meta.UpdateFileMetaDB(fileMeta)
 
-		http.Redirect(w, r, "/file/upload/success", http.StatusFound)
+		//TODO: update user file table
+		r.ParseForm()
+		username := r.Form.Get("username")
+		ok := db.OnUserFileUploadFinished(username, fileMeta.FileSha1,
+			fileMeta.FileName, fileMeta.FileSize)
+		if !ok {
+			w.Write([]byte("Upload Failed."))
+		}
+
+		http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
 	}
 }
 
@@ -106,15 +116,18 @@ func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 func FileQueryHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
+	username := r.Form.Get("username")
 	limitCount, _ := strconv.Atoi(r.Form.Get("limit"))
-	fileMetas, err := meta.GetLastMetas(limitCount)
+	// fileMetas, err := meta.GetLastMetas(limitCount)
+
+	userFiles, err := db.QueryUserFileMetas(username, limitCount)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// object ---> json
-	data, err := json.Marshal(fileMetas)
+	data, err := json.Marshal(userFiles)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -196,4 +209,53 @@ func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	meta.RemoveFileMeta(fileSha1)
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// TryFastUploadHandler logic
+func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// 1. parse form parameters
+	username := r.Form.Get("username")
+	filehash := r.Form.Get("filehash")
+	filename := r.Form.Get("filename")
+	filesize, _ := strconv.Atoi(r.Form.Get("filesize"))
+
+	// 2. check if there is same filehash in the database
+	fileMeta, err := meta.GetFileMetaDB(filehash)
+	if err != nil {
+		fmt.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// 3. return false if there is no record
+	if fileMeta.FileSha1 == "" {
+		resp := util.RespMsg{
+			Code: -1,
+			Msg:  "fast upload failed, use regular upload please",
+		}
+		w.Write(resp.JSONBytes())
+		return
+	}
+
+	// 4. otherwise upload file to database and return true
+	ok := db.OnUserFileUploadFinished(username, filehash, filename, int64(filesize))
+	if ok {
+		resp := util.RespMsg{
+			Code: 1,
+			Msg:  "fast upload successfully",
+		}
+		w.Write(resp.JSONBytes())
+		return
+	}
+	resp := util.RespMsg{
+		Code: 1,
+		Msg:  "upload failed, try it again.",
+	}
+	w.Write(resp.JSONBytes())
+	return
 }

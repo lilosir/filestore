@@ -10,13 +10,14 @@ import (
 func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
-	http.HandleFunc("/file/upload", handler.UploadHandler)
-	http.HandleFunc("/file/upload/success", handler.UploadSuccessHandler)
-	http.HandleFunc("/file/meta", handler.GetFileMetaHandler)
-	http.HandleFunc("/file/query", handler.FileQueryHandler)
-	http.HandleFunc("/file/download", handler.DownloadHandler)
-	http.HandleFunc("/file/update", handler.UpdateHandler)
-	http.HandleFunc("/file/delete", handler.FileDeleteHandler)
+	http.HandleFunc("/file/upload", middleware.HTTPInterceptor(handler.UploadHandler))
+	http.HandleFunc("/file/upload/success", middleware.HTTPInterceptor(handler.UploadSuccessHandler))
+	http.HandleFunc("/file/meta", middleware.HTTPInterceptor(handler.GetFileMetaHandler))
+	http.HandleFunc("/file/query", middleware.HTTPInterceptor(handler.FileQueryHandler))
+	http.HandleFunc("/file/download", middleware.HTTPInterceptor(handler.DownloadHandler))
+	http.HandleFunc("/file/update", middleware.HTTPInterceptor(handler.UpdateHandler))
+	http.HandleFunc("/file/delete", middleware.HTTPInterceptor(handler.FileDeleteHandler))
+	http.HandleFunc("/file/fastupload", middleware.HTTPInterceptor(handler.TryFastUploadHandler))
 
 	http.HandleFunc("/user/signup", handler.SignUpHander)
 	http.HandleFunc("/user/signin", handler.SignInHander)
