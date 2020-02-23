@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"fileStore/db"
+	dbLayer "fileStore/db"
 	"fileStore/meta"
 	"fileStore/util"
 	"strconv"
@@ -75,7 +75,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		//TODO: update user file table
 		r.ParseForm()
 		username := r.Form.Get("username")
-		ok := db.OnUserFileUploadFinished(username, fileMeta.FileSha1,
+		ok := dbLayer.OnUserFileUploadFinished(username, fileMeta.FileSha1,
 			fileMeta.FileName, fileMeta.FileSize)
 		if !ok {
 			w.Write([]byte("Upload Failed."))
@@ -120,7 +120,7 @@ func FileQueryHandler(w http.ResponseWriter, r *http.Request) {
 	limitCount, _ := strconv.Atoi(r.Form.Get("limit"))
 	// fileMetas, err := meta.GetLastMetas(limitCount)
 
-	userFiles, err := db.QueryUserFileMetas(username, limitCount)
+	userFiles, err := dbLayer.QueryUserFileMetas(username, limitCount)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -243,7 +243,7 @@ func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. otherwise upload file to database and return true
-	ok := db.OnUserFileUploadFinished(username, filehash, filename, int64(filesize))
+	ok := dbLayer.OnUserFileUploadFinished(username, filehash, filename, int64(filesize))
 	if ok {
 		resp := util.RespMsg{
 			Code: 1,

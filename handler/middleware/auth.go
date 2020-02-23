@@ -19,6 +19,8 @@ func HTTPInterceptor(h http.HandlerFunc) http.HandlerFunc {
 
 		if len(username) < 3 || !handler.IsTokenValid(token, username) {
 			w.WriteHeader(http.StatusForbidden)
+			s := "Please login"
+			w.Write([]byte(s))
 			return
 		}
 

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	dbUser "fileStore/db"
+	dbLayer "fileStore/db"
 	"fileStore/util"
 	"fmt"
 	"net/http"
@@ -42,7 +42,7 @@ func SignUpHander(w http.ResponseWriter, r *http.Request) {
 		//encrypted password
 		encPassword := util.Sha1([]byte(userPassword + passwordSalt))
 
-		ok := dbUser.UserSignUp(userName, encPassword)
+		ok := dbLayer.UserSignUp(userName, encPassword)
 		if ok {
 			w.Write([]byte("SUCCESS"))
 		} else {
@@ -75,7 +75,7 @@ func SignInHander(w http.ResponseWriter, r *http.Request) {
 	encPassword := util.Sha1([]byte(password + passwordSalt))
 
 	//step 1: check username and password
-	pwdChecked := dbUser.UserSignIn(username, encPassword)
+	pwdChecked := dbLayer.UserSignIn(username, encPassword)
 	if !pwdChecked {
 		w.Write([]byte("FAILED"))
 		return
@@ -83,7 +83,7 @@ func SignInHander(w http.ResponseWriter, r *http.Request) {
 
 	//step 2: authentication (token or session/cookies)
 	token := GenToken(username)
-	ok := dbUser.UpdateToken(username, token)
+	ok := dbLayer.UpdateToken(username, token)
 	if !ok {
 		w.Write([]byte("FAILED"))
 		return
@@ -125,7 +125,7 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	//step 3: query
-	user, err := dbUser.GetUserInfo(username)
+	user, err := dbLayer.GetUserInfo(username)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		return
@@ -160,7 +160,7 @@ func IsTokenValid(token, username string) bool {
 		return false
 	}
 	//query token from tbl_user_token table via username
-	dbToken, err := dbUser.GetUserToken(username)
+	dbToken, err := dbLayer.GetUserToken(username)
 	if err != nil {
 		fmt.Printf("fetch token error: %s", err.Error())
 		return false
