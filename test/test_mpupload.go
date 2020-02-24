@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+
+	jsonit "github.com/json-iterator/go"
 )
 
 func multipartUpload(filename string, targetURL string, chunkSize int) error {
@@ -32,7 +34,8 @@ func multipartUpload(filename string, targetURL string, chunkSize int) error {
 		}
 		index++
 
-		bufCopied := make([]byte, 5*1048576)
+		chunkSize := 10 * 1024 * 1024 //10 MB
+		bufCopied := make([]byte, chunkSize)
 		copy(bufCopied, buf)
 
 		go func(b []byte, curIdx int) {
@@ -75,57 +78,17 @@ func multipartUpload(filename string, targetURL string, chunkSize int) error {
 
 func main() {
 	username := "admin"
-	token := "58878710bef1ea9213046ae5c45e835f5e520f30"
+	token := "ff58362451b75893e1ccd6f05ab397f15e529b7a"
 	filehash := "376b96274e9f1ff2c4ca63b336d45ace2244191c"
 
 	// 1. 请求初始化分块上传接口
-	// resp, err := http.PostForm(
-	// 	"http://localhost:8080/file/mpupload/init",
-	// 	url.Values{
-	// 		"username": {username},
-	// 		"token":    {token},
-	// 		"filehash": {filehash},
-	// 		"filesize": {"677499765"},
-	// 	})
-
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// 	os.Exit(-1)
-	// }
-
-	// defer resp.Body.Close()
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// 	os.Exit(-1)
-	// }
-
-	// var dat map[string]interface{}
-	// json.Unmarshal(body, &dat)
-
-	// // 2. 得到uploadID以及服务端指定的分块大小chunkSize
-	// uploadID := jsonit.Get(body, "data").Get("UploadID").ToString()
-	// chunkSize := jsonit.Get(body, "data").Get("ChunkSize").ToInt()
-	// ChunkCount := jsonit.Get(body, "data").Get("ChunkCount").ToInt()
-	// fmt.Printf("chunk count: %d", ChunkCount)
-	// fmt.Printf("uploadid: %s  chunksize: %d\n", uploadID, chunkSize)
-
-	// // 3. 请求分块上传接口
-	// filename := "/Users/osir/Desktop/Dockerdmg.zip"
-	// tURL := "http://localhost:8080/file/mpupload/uppart?" +
-	// 	"username=admin&token=" + token + "&uploadid=" + uploadID
-	// multipartUpload(filename, tURL, chunkSize)
-
-	// 4. 请求分块完成接口
 	resp, err := http.PostForm(
-		"http://localhost:8080/file/mpupload/complete",
+		"http://localhost:8080/file/mpupload/init",
 		url.Values{
 			"username": {username},
 			"token":    {token},
 			"filehash": {filehash},
 			"filesize": {"677499765"},
-			"filename": {"Dockerdmg.zip"},
-			"uploadid": {"admin323032302d30322d32332030303a35343a35342e313436323239202d3035303020455354206d3d2b32342e303835303737363935"},
 		})
 
 	if err != nil {
@@ -135,6 +98,41 @@ func main() {
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(-1)
+	}
+
+	// 2. 得到uploadID以及服务端指定的分块大小chunkSize
+	uploadID := jsonit.Get(body, "data").Get("UploadID").ToString()
+	chunkSize := jsonit.Get(body, "data").Get("ChunkSize").ToInt()
+	fmt.Printf("uploadid: %s  chunksize: %d\n", uploadID, chunkSize)
+
+	// 3. 请求分块上传接口
+	filename := "/Users/osir/Desktop/Dockerdmg.zip"
+	tURL := "http://localhost:8080/file/mpupload/uppart?" +
+		"username=admin&token=" + token + "&uploadid=" + uploadID
+	multipartUpload(filename, tURL, chunkSize)
+
+	// 4. 请求分块完成接口
+	resp, err = http.PostForm(
+		"http://localhost:8080/file/mpupload/complete",
+		url.Values{
+			"username": {username},
+			"token":    {token},
+			"filehash": {filehash},
+			"filesize": {"677499765"},
+			"filename": {"Dockerdmg.zip"},
+			"uploadid": {uploadID},
+		})
+
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(-1)
+	}
+
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(-1)

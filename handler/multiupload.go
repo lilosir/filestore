@@ -46,12 +46,13 @@ func InitialMultipartUploadHandler(w http.ResponseWriter, r *http.Request) {
 	defer rConn.Close()
 
 	// 3. generate multi-part upload intial info
+	chunkSize := 10 * 1024 * 1024 //10 MB
 	uploadInfo := MultiPartUploadInfo{
 		FileHash:   filehash,
 		FileSize:   filesize,
 		UploadID:   username + fmt.Sprintf("%x", time.Now()),
-		ChunkSize:  5 * 1024 * 1024, //5 MB
-		ChunkCount: int(math.Ceil(float64(filesize) / (5 * 1024 * 1024))),
+		ChunkSize:  chunkSize,
+		ChunkCount: int(math.Ceil(float64(filesize) / float64(chunkSize))),
 	}
 
 	//4. wirte the initial info to redis cache

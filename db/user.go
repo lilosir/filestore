@@ -10,6 +10,7 @@ import (
 func UserSignUp(username, password string) bool {
 	stmt, err := mysql.DBConn().Prepare(
 		"insert ignore into tbl_user(`user_name`, `user_pwd`) values (?,?)")
+
 	if err != nil {
 		fmt.Println(err.Error())
 		return false
@@ -22,7 +23,9 @@ func UserSignUp(username, password string) bool {
 		return false
 	}
 
-	if rowsAffected, err := result.RowsAffected(); err == nil && rowsAffected > 0 {
+	rowsAffected, err := result.RowsAffected()
+
+	if err == nil && rowsAffected > 0 {
 		return true
 	}
 
